@@ -4,8 +4,8 @@ const app = express();
 const fs = require("fs");
 const port = process.env.PORT || 3000;
 
-const sateliteId = [25544, 25338];
-const predictedSeconds = 30;
+const sateliteId = process.env.SATELITES.split(", ");
+const predictedSeconds = process.env.SEGUNDOS;
 const urlN2yo = [];
 
 console.log("[api-satellite] " + "Generating urls to fecth N2YO API.");
@@ -69,10 +69,15 @@ function fetchDataAndSavePeriodically() {
 fetchDataAndSavePeriodically();
 setInterval(fetchDataAndSavePeriodically, 30 * 60 * 1000);
 
-app.use(express.static("./data", { index: false, extensions: ["json"] }));
-app.use("/data", function (req, res, next) {
-  res.send(JSON.stringify("/data/dados.json"));
-  next();
+app.get("/data", (req, res) => {
+  try {
+    // Ler o conteúdo do arquivo
+    const data = fs.readFileSync("api/data/dados.json", "utf8");
+    res.status(200).send(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro ao ler o arquivo");
+  }
 });
 
 app.get("/", (req, res) => {
