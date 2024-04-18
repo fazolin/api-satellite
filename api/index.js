@@ -7,6 +7,7 @@ const port = process.env.PORT || 3000;
 const sateliteId = process.env.SATELITES.split(", ");
 const predictedSeconds = process.env.SEGUNDOS;
 const urlN2yo = [];
+let sateliteData;
 
 console.log("[api-satellite] " + "Generating urls to fecth N2YO API.");
 
@@ -21,29 +22,15 @@ sateliteId.forEach(function (id, i) {
   console.log("[api-satellite] " + urlN2yo[i]);
 });
 
-async function fetchDataFromUrlsAndSaveToFile(urls, filePath) {
+async function fetchDataFromUrls(urls, filePath) {
   console.log("[api-satellite] [fetching data] Conectando na API.");
   try {
     // Mesmo código para buscar os dados das APIs
     const requests = urls.map((url) => fetch(url));
     const responses = await Promise.all(requests);
-    const data = await Promise.all(
+    sateliteData = await Promise.all(
       responses.map((response) => response.json())
     );
-
-    // Cria o caminho completo para o diretório "data" e o arquivo JSON
-    const dataDirectory = `${__dirname}/data`;
-    const outputFile = `${dataDirectory}/${filePath}`;
-
-    // Verifica se o diretório "data" existe, senão, cria-o
-    if (!fs.existsSync(dataDirectory)) {
-      fs.mkdirSync(dataDirectory);
-    }
-
-    // Escreve os dados em um arquivo JSON
-    fs.writeFileSync(outputFile, JSON.stringify(data, null, 2));
-
-    console.log("[api-satellite] [saving data] Dados salvos em:", filePath);
   } catch (error) {
     console.error(
       "[api-satellite] [saving data] Erro ao buscar dados ou salvar em arquivo:",
@@ -53,9 +40,8 @@ async function fetchDataFromUrlsAndSaveToFile(urls, filePath) {
   }
 }
 
-const outputFile = "dados.json"; // Nome do arquivo de saída
-function fetchDataAndSavePeriodically() {
-  fetchDataFromUrlsAndSaveToFile(urlN2yo, outputFile)
+function fetchDataPeriodically() {
+  fetchDataFromUrls(urlN2yo)
     .then(() => {
       console.log("[api-satellite] [fetching data] Processo concluído.");
     })
@@ -66,14 +52,12 @@ function fetchDataAndSavePeriodically() {
       );
     });
 }
-fetchDataAndSavePeriodically();
-setInterval(fetchDataAndSavePeriodically, 30 * 60 * 1000);
+fetchDataPeriodically();
+setInterval(fetchDataPeriodically, 30 * 60 * 1000);
 
 app.get("/data", (req, res) => {
   try {
-    // Ler o conteúdo do arquivo
-    const data = fs.readFileSync("api/data/dados.json", "utf8");
-    res.status(200).send(data);
+    res.status(200).send(sateliteData);
   } catch (err) {
     console.error(err);
     res.status(500).send("Erro ao ler o arquivo");
