@@ -32,10 +32,7 @@ async function fetchDataFromUrls(urls, filePath) {
       responses.map((response) => response.json())
     );
   } catch (error) {
-    console.error(
-      "[api-satellite] [saving data] Erro ao buscar dados ou salvar em arquivo:",
-      error
-    );
+    console.error("[api-satellite] [saving data] Erro ao buscar dados.", error);
     throw error;
   }
 }
